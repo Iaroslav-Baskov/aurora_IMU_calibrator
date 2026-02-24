@@ -36,7 +36,3 @@ This project performs multi-stage sensor calibration to account for temperature 
 
 - **Language**: C++
 - **Analysis**: Python scripts
-
-## Contact
-
-Created by [Iaroslav-Baskov](https://github.com/Iaroslav-Baskov)
