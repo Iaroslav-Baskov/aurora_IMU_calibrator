@@ -5,6 +5,8 @@
 #include <BMP280.h>
 #include <Adafruit_AHTX0.h>
 #include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_HMC5883_U.h>
 
 #define CS_PIN    4
 
@@ -16,7 +18,7 @@
 #define HOT_PIN   32
 #define TEST_PIN  35
 
-#define QMC5883L_ADDRESS 0x0D
+Adafruit_HMC5883_Unified mag = Adafruit_HMC5883_Unified(12345);
 
 GY521 sensor(0x68);
 BMP280 bmp280;
@@ -67,24 +69,7 @@ int unitime;
 uint8_t payload[sizeof(SensorData) + 2];
 
 
-void getMag(float3d &output,float t) {
-    check.mag.last = millis();
-    int16_t3d result;
-  
-    Wire.beginTransmission(QMC5883L_ADDRESS);
-    Wire.write(0x00);
-    Wire.endTransmission();
-    Wire.requestFrom(QMC5883L_ADDRESS, 6);
-  
-    if (Wire.available() >= 6) {
-      result.x = Wire.read() | (Wire.read() << 8);
-      result.y = Wire.read() | (Wire.read() << 8);
-      result.z = Wire.read() | (Wire.read() << 8);
-      output.x=(float)result.x;
-      output.y=(float)result.y;
-      output.z=(float)result.z;
-   }
-}
+
 void checkI2CDevices() {
     check.gyro.OK = check.gyro.OK && i2cDevicePresent(0x68);
     Serial.print(check.gyro.OK);
@@ -92,7 +77,7 @@ void checkI2CDevices() {
     Serial.print(check.BMP.OK);
     check.AHT.OK =check.AHT.OK && i2cDevicePresent(0x38);
     Serial.print(check.AHT.OK);
-    check.mag.OK =check.mag.OK && i2cDevicePresent(QMC5883L_ADDRESS);
+    check.mag.OK =check.mag.OK && i2cDevicePresent(0x1E);
     Serial.println(check.mag.OK);
 }
 
@@ -168,23 +153,10 @@ void accelConnect(){
     }
   }else Serial.println("accel not found");
 }
-void magnConnect(){
-  Serial.println("magn connect");
-  check.mag.last=millis();
-  
-  check.mag.OK = i2cDevicePresent(QMC5883L_ADDRESS);
-  if(check.mag.OK){
-    Wire.beginTransmission(QMC5883L_ADDRESS);
-    Wire.write(0x09);
-    Wire.write(0b00011101); // OSR=512, 8G, 200Hz, continuous
-    Wire.endTransmission();
-  
-    Wire.beginTransmission(QMC5883L_ADDRESS);
-    Wire.write(0x0B);
-    Wire.write(0x01);
-    Wire.endTransmission();
-  }
-  else Serial.println("magn no found");
+void magnConnect() {
+  Serial.println("HMC5883L connect...");
+  check.mag.last = millis();
+  check.mag.OK =mag.begin();
 }
 void startI2CDevices(){
   delay(500);
@@ -253,7 +225,12 @@ void loop() {
     bmpConnect();
   }
   if(check.mag.OK){
-    getMag(data.mag,data.gtemp);}
+      sensors_event_t event; 
+      mag.getEvent(&event);
+      data.mag.x=event.magnetic.x;
+      data.mag.y=event.magnetic.y;
+      data.mag.z=event.magnetic.z;
+  }
   else if (millis()-check.mag.last>check.mag.timeout){
     magnConnect();
   }
