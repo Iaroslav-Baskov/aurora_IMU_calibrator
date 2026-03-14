@@ -1,6 +1,6 @@
 # aurora_IMU_calibrator
 
-A comprehensive tool for calibrating the GY521 gyroscope and QMC5883L magnetometer of esp32-based stratospheric probe sensors using temperature-dependent calibration techniques.
+A comprehensive tool for calibrating the GY521 gyroscope and HMC5883 magnetometer of esp32-based stratospheric probe sensors using temperature-dependent calibration techniques.
 
 ## Overview
 
